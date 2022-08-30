@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+    <!-- https://playground.babylonjs.com/#AHQEIB#17 -->
+
+    <!-- Babylon.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <script src="../../common/CommonMaterials.js"></script>
+    <script src="../../common/UXhelpers.js"></script>
+
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+
+        var startRenderLoop = function (engine, canvas) {
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        }
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+
+        var videoPlaneMesh = null;
+        var jetsonCar = null;
+        var label = null;
+
+        let scale = 3
+        let height = 9 / scale
+        let width = 16 / scale
+        let depth = 1.5
+
+        let size = {
+            width: width,
+            height: height,
+            depth: depth,
+        }
+
+
+        var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, disableWebGL2Support: false }); };
+
+        var createScene = function () {
+
+            // init our project Materials
+            var commonMaterials = new CommonMaterials(BABYLON, scene)
+
+            // Low Poly Character with Blender Tutorial of Grant Abbitt: https://www.youtube.com/user/mediagabbitt
+            // Character animations by Mixamo: https://www.mixamo.com/
+
+            engine.enableOfflineSupport = false;
+
+            // Scene and Camera
+            var scene = new BABYLON.Scene(engine);
+
+            // const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 3, 3), this.scene);
+            // // camera.attachControl();
+
+            // camera.applyGravity = false;
+            // camera.checkCollisions = true;
+
+            // camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+
+            // camera.minZ = 0.45;
+            // camera.speed = 0.75;
+            // camera.angularSensibility = 4000;
+
+            // camera.keysUp.push(87);
+            // camera.keysLeft.push(65);
+            // camera.keysDown.push(83);
+            // camera.keysRight.push(68);
+
+            var camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 4, 10, new BABYLON.Vector3(0, -5, 0), scene);
+            // scene.activeCamera = camera;
+            // scene.activeCamera.attachControl(canvas, true);
+            camera.lowerRadiusLimit = 2;
+            camera.upperRadiusLimit = 10;
+            camera.wheelDeltaPercentage = 0.01;
+
+
+            camera.checkCollisions = true;
+            camera.applyGravity = true;
+            camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+
+            camera.attachControl();
+
+            // Lights
+
+            var light = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+            light.intensity = 0.7;
+            light.specular = BABYLON.Color3.Black();
+
+            var light2 = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -0.5, -1.0), scene);
+            light2.position = new BABYLON.Vector3(0, 5, 5);
+
+            // Skybox 
+            var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+
+            skybox.position.y = 50.0
+            var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://assets.babylonjs.com/textures/skybox2", scene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            skyboxMaterial.diffuseColor = BABYLON.Color3.Black()
+            skyboxMaterial.specularColor = BABYLON.Color3.Black();
+            skybox.material = skyboxMaterial;
+
+
+            // Needs a better GUI
+
+            //Add GUI
+            var message = "Move w/ WASD keys, B for Samba, look with the mouse";
+
+            commonMaterials.createLabel(message, "right", "bottom").then((gui) => {
+                gui.label.color = "white";
+
+            });
+
+            commonMaterials.createGUIButton("Save", "left", "top").then((gui) => {
+                gui.button.background = "blue";
+                gui.button.onPointerUpObservable.add(function () {
+                    UXHelpers.saveScene(scene)
+                });
+            });
+
+            commonMaterials.createGUIButton("Debug", "left", "bottom").then((gui) => {
+                gui.button.background = "blue";
+                gui.button.onPointerUpObservable.add(function () {
+                    scene.debugLayer.show();
+                });
+            });
+
+
+
+            // Ground
+            var ground = BABYLON.MeshBuilder.CreateGround("ground", { height: 50, width: 50, subdivisions: 4 }, scene);
+            ground.material = commonMaterials.woodMaterial()
+
+
+            // Keyboard events
+            var inputMap = {};
+            scene.actionManager = new BABYLON.ActionManager(scene);
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+            scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, function (evt) {
+                inputMap[evt.sourceEvent.key] = evt.sourceEvent.type == "keydown";
+            }));
+
+
+            BABYLON.SceneLoader.ImportMesh("", "./meshes/", "jetsonsCar-v2.glb", scene, function (newMeshes, particleSystems, skeletons, animationGroups) {
+                jetsonCar = newMeshes[0]; // our root
+                jetsonCar.rotation = new BABYLON.Vector3(0, 0, 0);
+
+                jetsonCar.checkCollisions = true;
+                jetsonCar.applyGravity = true;
+
+
+                jetsonCar.ellipsoid = new BABYLON.Vector3(1, 1, 1)
+                jetsonCar.position = new BABYLON.Vector3(-1, 7.5, 50)
+
+
+
+                //  videoPlaneMesh.position = new BABYLON.Vector3(0, 2.85, 2);      
+            });
+
+            // Load hero character
+            BABYLON.SceneLoader.ImportMesh("", "./meshes/", "HVGirl.glb", scene, function (newMeshes, particleSystems, skeletons, animationGroups) {
+                //  BABYLON.SceneLoader.ImportMesh("", "./meshes/", "y-bot.glb", scene, function (newMeshes, particleSystems, skeletons, animationGroups) {
+
+                // newMeshes.map((mesh) => {
+                //     mesh.checkCollisions = true;
+                //     mesh.applyGravity = true;
+                //     mesh.ellipsoid = new BABYLON.Vector3(0.1, 0.1, 0.1);
+                // });
+
+                var hero = newMeshes[0];
+                // scene.debugLayer.show();
+                // Scale the model down        
+                // hero.scaling.scaleInPlace(1.0); // y_bot
+                hero.scaling.scaleInPlace(0.15); // girl
+                //Lock camera on the character 
+                // hero.checkCollisions = true;
+                camera.target = hero
+                //Hero character variables      
+                var heroSpeed = 10.1;
+                var heroSpeedBackwards = 0.1;
+                var heroRotationSpeed = 0.1;
+
+
+                hero.checkCollisions = true;
+                hero.applyGravity = true;
+                hero.ellipsoid = new BABYLON.Vector3(0.1, 0.1, 0.1);
+
+                var animating = true;
+
+                const walkAnim = scene.getAnimationGroupByName("Walking");
+                const walkBackAnim = scene.getAnimationGroupByName("WalkingBack");
+                const idleAnim = scene.getAnimationGroupByName("Idle");
+                const sambaAnim = scene.getAnimationGroupByName("Samba");
+
+
+
+
+                // Video texture on a box
+
+
+                var videos = ["textures/arthur.mp4", "https://dynamicgamesdeveloper.github.io/Video/Bear.webm"];
+
+                commonMaterials.createVideoMaterialAndTexture(videos, false, true).then((videoTM) => {
+                    videoMaterial = videoTM.videoMaterial
+                    videoTexture = videoTM.videoTexture
+                    videoTexture.video.loop = false;
+                    videoTexture.video.pause();
+                    console.log(videoMaterial, videoTexture, videoTM)
+
+                    if (videoTexture) {
+                        videoBox = commonMaterials.makeCube("videoBox", videoMaterial, videoTexture, size, false)
+                        videoBox.position = new BABYLON.Vector3(0, height / 2, -2);
+                    }
+
+                }).catch(e => console.log(e))
+
+                scene.onPointerObservable.add(function (evt) {
+                    if (evt.pickInfo.pickedMesh === videoBox) {
+                        //console.log("picked");
+                        if (videoTexture.video.paused)
+                            videoTexture.video.play();
+                        else
+                            videoTexture.video.pause();
+                        console.log(videoTexture.video.paused ? "paused" : "playing");
+                    }
+                }, BABYLON.PointerEventTypes.POINTERPICK);
+
+
+
+                //Rendering loop (executed for everyframe)
+                scene.onBeforeRenderObservable.add(() => {
+                    var keydown = false;
+                    //Manage the movements of the character (e.g. position, direction)
+                    if (inputMap["w"]) {
+                        hero.moveWithCollisions(hero.forward.scaleInPlace(heroSpeed));
+                        keydown = true;
+                    }
+                    if (inputMap["s"]) {
+                        hero.moveWithCollisions(hero.forward.scaleInPlace(-heroSpeedBackwards));
+                        keydown = true;
+                    }
+                    if (inputMap["a"]) {
+                        hero.rotate(BABYLON.Vector3.Up(), -heroRotationSpeed);
+                        keydown = true;
+                    }
+                    if (inputMap["d"]) {
+                        hero.rotate(BABYLON.Vector3.Up(), heroRotationSpeed);
+                        keydown = true;
+                    }
+                    if (inputMap["b"]) {
+                        keydown = true;
+                    }
+
+                    //Manage animations to be played  
+                    if (keydown) {
+                        if (!animating) {
+                            animating = true;
+                            if (inputMap["s"]) {
+                                //Walk backwards
+                                walkBackAnim.start(true, 1.0, walkBackAnim.from, walkBackAnim.to, false);
+                            }
+                            else if
+                                (inputMap["b"]) {
+                                //Samba!
+                                sambaAnim.start(true, 1.0, sambaAnim.from, sambaAnim.to, false);
+                            }
+                            else {
+                                //Walk
+                                walkAnim.start(true, 1.0, walkAnim.from, walkAnim.to, false);
+                            }
+                        }
+                    }
+                    else {
+
+                        if (animating) {
+                            //Default animation is idle when no key is down     
+                            idleAnim.start(true, 1.0, idleAnim.from, idleAnim.to, false);
+
+                            //Stop all animations besides Idle Anim when no key is down
+                            sambaAnim.stop();
+                            walkAnim.stop();
+                            walkBackAnim.stop();
+
+                            //Ensure animation are played only once per rendering loop
+                            animating = false;
+                        }
+                    }
+                });
+            });
+
+
+
+
+            scene.meshes.map((mesh) => {
+                mesh.checkCollisions = true;
+                console.log(mesh.checkCollisions, mesh.id)
+            });
+
+            // Bounce animation 
+
+            var forward = true
+            //Sun animation
+            scene.registerBeforeRender(function () {
+
+
+                if (jetsonCar) {
+
+                    (forward) ? jetsonCar.position.z -= 0.05 : jetsonCar.position.z += 0.05;
+
+                    if (jetsonCar.position.z <= -90) {
+                        forward = false;
+                        jetsonCar.rotation.y = 0;
+                    } else if (jetsonCar.position.z > 90) {
+                        forward = true
+                        jetsonCar.rotation.y = 180
+                    }
+                }
+
+            });
+
+            return scene;
+        }
+        window.initFunction = async function () {
+
+
+            var asyncEngineCreation = async function () {
+                try {
+                    return createDefaultEngine();
+                } catch (e) {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+
+            window.engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            startRenderLoop(engine, canvas);
+            window.scene = createScene();
+        };
+        initFunction().then(() => {
+            sceneToRender = scene
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+    </script>
+</body>
+
+</html>

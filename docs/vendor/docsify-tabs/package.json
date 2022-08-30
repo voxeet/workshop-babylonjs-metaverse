@@ -1,0 +1,75 @@
+{
+  "name": "docsify-tabs",
+  "version": "1.5.3",
+  "description": "A docsify.js plugin for rendering tabbed content from markdown",
+  "author": "John Hildenbiddle",
+  "license": "MIT",
+  "homepage": "https://jhildenbiddle.github.io/docsify-tabs/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://jhildenbiddle@github.com/jhildenbiddle/docsify-tabs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jhildenbiddle/docsify-tabs/issues"
+  },
+  "keywords": [
+    "docs",
+    "docsify",
+    "docsify.js",
+    "documentation",
+    "generator",
+    "javascript",
+    "js",
+    "markdown",
+    "md",
+    "plugin",
+    "tab",
+    "tabs"
+  ],
+  "browserslist": [
+    "ie >= 10"
+  ],
+  "files": [
+    "dist"
+  ],
+  "main": "dist/docsify-tabs.js",
+  "unpkg": "dist/docsify-tabs.min.js",
+  "scripts": {
+    "build": "rollup -c",
+    "clean": "rimraf dist/*",
+    "escheck": "es-check es5 'dist/**/*.js'",
+    "lint": "eslint . && markdownlint . --ignore node_modules",
+    "prepare": "run-s clean build",
+    "serve": "node server.js",
+    "start": "run-p watch serve",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "run-p 'build -- -w'",
+    "version": "run-s prepare lint escheck"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.13.16",
+    "@babel/preset-env": "^7.13.15",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-commonjs": "^22.0.1",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.4",
+    "autoprefixer": "^10.2.5",
+    "browser-sync": "^2.26.14",
+    "compression": "^1.7.4",
+    "es-check": "^7.0.0",
+    "eslint": "^8.12.0",
+    "lodash.merge": "^4.6.2",
+    "markdownlint-cli": "^0.32.1",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.3.6",
+    "postcss-custom-properties": "^12.1.6",
+    "postcss-flexbugs-fixes": "^5.0.2",
+    "postcss-import": "^14.0.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.45.2",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-postcss": "^4.0.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "sass": "^1.49.11"
+  }
+}

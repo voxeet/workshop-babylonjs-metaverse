@@ -1,0 +1,279 @@
+<!-- 
+
+    https://dzone.com/articles/babylonjs-how-load-babylon
+ -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>World Builder</title>
+
+    <!-- Babylon.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <!--  pointer helper -->
+
+    <script src="../../common/CommonMaterials.js"></script>
+    <script src="../../common/UXhelpers.js"></script>
+
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+
+        var canvas = document.getElementById("renderCanvas");
+
+        var startRenderLoop = function (engine, canvas) {
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        }
+
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var button1 = null;
+        var commonMaterials = null;
+        // Scene save Util
+        var objectUrl;
+
+        var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, disableWebGL2Support: false }); };
+
+        var createScene = async function () {
+           var scene = new BABYLON.Scene(engine);
+        //    BABYLON.SceneLoader.AppendAsync("", "world.babylon", scene);
+
+
+            var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 10, new BABYLON.Vector3(0, 0, 0), scene);
+            camera.setPosition(new BABYLON.Vector3(20, 200, 400));
+            camera.attachControl(canvas, true);
+
+            camera.upperBetaLimit = (Math.PI / 2) * 0.99;
+
+            // init our project Materials
+            commonMaterials = new CommonMaterials(BABYLON, scene)
+
+            // Light
+            var light = new BABYLON.PointLight("omni", new BABYLON.Vector3(50, 200, 0), scene);
+
+            //Materials
+            var groundMaterial = new BABYLON.StandardMaterial("ground", scene);
+            groundMaterial.specularColor = BABYLON.Color3.Black();
+
+            var redMat = new BABYLON.StandardMaterial("ground", scene);
+            redMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            redMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            redMat.emissiveColor = BABYLON.Color3.Red();
+
+            var greenMat = new BABYLON.StandardMaterial("ground", scene);
+            greenMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            greenMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            greenMat.emissiveColor = BABYLON.Color3.Green();
+
+            var blueMat = new BABYLON.StandardMaterial("ground", scene);
+            blueMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            blueMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            blueMat.emissiveColor = BABYLON.Color3.Blue();
+
+            var purpleMat = new BABYLON.StandardMaterial("ground", scene);
+            purpleMat.diffuseColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            purpleMat.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+            purpleMat.emissiveColor = BABYLON.Color3.Purple();
+
+            /*************************************Meshes****************************************/
+            // Ground
+            var ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 1000, height: 1000 }, scene, false);
+            ground.material = groundMaterial;
+
+            // Meshes
+            var redSphere = BABYLON.MeshBuilder.CreateSphere("red", { diameter: 20 }, scene);
+            redSphere.material = redMat;
+            redSphere.position.y = 10;
+            redSphere.position.x -= 100;
+
+            var greenBox = BABYLON.MeshBuilder.CreateBox("green", { size: 20 }, scene);
+            greenBox.material = greenMat;
+            greenBox.position.z -= 100;
+            greenBox.position.y = 10;
+
+            var blueBox = BABYLON.MeshBuilder.CreateBox("blue", { size: 20 }, scene);
+            blueBox.material = blueMat;
+            blueBox.position.x += 100;
+            blueBox.position.y = 10;
+
+            var purpleDonut = BABYLON.MeshBuilder.CreateTorus("red", { diameter: 30, thickness: 10 }, scene);
+            purpleDonut.material = purpleMat;
+            purpleDonut.position.y = 10;
+            purpleDonut.position.z += 100;
+
+            var startingPoint;
+            var currentMesh;
+
+            var getGroundPosition = function () {
+                var pickinfo = scene.pick(scene.pointerX, scene.pointerY, function (mesh) { return mesh == ground; });
+                if (pickinfo.hit) {
+                    return pickinfo.pickedPoint;
+                }
+
+                return null;
+            }
+
+            var pointerDown = function (mesh) {
+                currentMesh = mesh;
+                startingPoint = getGroundPosition();
+                if (startingPoint) { // we need to disconnect camera from canvas
+                    setTimeout(function () {
+                        camera.detachControl(canvas);
+                    }, 0);
+                }
+            }
+
+            var pointerUp = function () {
+                if (startingPoint) {
+                    camera.attachControl(canvas, true);
+                    startingPoint = null;
+                    return;
+                }
+            }
+
+            var pointerMove = function () {
+                if (!startingPoint) {
+                    return;
+                }
+                var current = getGroundPosition();
+                if (!current) {
+                    return;
+                }
+
+                var diff = current.subtract(startingPoint);
+                currentMesh.position.addInPlace(diff);
+
+                startingPoint = current;
+
+            }
+
+            scene.onPointerObservable.add((pointerInfo) => {
+                switch (pointerInfo.type) {
+                    case BABYLON.PointerEventTypes.POINTERDOWN:
+                        if (pointerInfo.pickInfo.hit && pointerInfo.pickInfo.pickedMesh != ground) {
+                            pointerDown(pointerInfo.pickInfo.pickedMesh)
+                        }
+                        break;
+                    case BABYLON.PointerEventTypes.POINTERUP:
+                        pointerUp();
+                        break;
+                    case BABYLON.PointerEventTypes.POINTERMOVE:
+                        pointerMove();
+                        break;
+                }
+            });
+            var message = "Move w/ WASD keys, B for Samba, look with the mouse";
+
+            commonMaterials.createGUIButton(message, "Save").then((gui) => {
+                gui.saveButton.onPointerUpObservable.add(function () {
+                    UXHelpers.saveScene(scene)
+                });
+            });
+
+
+
+            // BABYLON.SceneLoader.ImportMesh("city", "__root__/idle", "world.babylon", scene, function (newMeshes, particleSystems) {
+            //     });
+
+        
+            /*
+            BABYLON.SceneLoader.Append("", "world.babylon", engine, function (newScene) {
+                            // Wait for textures and shaders to be ready
+                            newScene.executeWhenReady(function () {
+                                // Attach camera to canvas inputs
+                                newScene.activeCamera.attachControl(canvas);
+            
+                                 scene = newScene
+            
+                                // // Once the scene is loaded, just register a render loop to render it
+                                engine.runRenderLoop(function () {
+                                    newScene.render();
+                                });
+                            });
+                        }, function (progress) {
+                            // To do: give progress feedback to user
+                        });
+                     */
+   // load morph target mesh
+//    var morph1 = await BABYLON.SceneLoader.AppendAsync("", "world.babylon");
+
+
+   var morph = await BABYLON.SceneLoader.AppendAsync("https://patrickryanms.github.io/BabylonJStextures/Demos/morphTarget/glb/cubeSphereMorph.glb");
+
+
+            return scene;
+        };
+
+        window.initFunction = async function () {
+
+
+            var asyncEngineCreation = async function () {
+                try {
+                    return createDefaultEngine();
+                } catch (e) {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+
+            window.engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            startRenderLoop(engine, canvas);
+            
+            window.scene = createScene();
+        };
+        initFunction().then(() => {
+            sceneToRender = scene
+        });
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+
+
+    </script>
+</body>
+
+</html>

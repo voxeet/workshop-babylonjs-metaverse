@@ -1,0 +1,30 @@
+{
+  "name": "cascadiajs-2022-workshop",
+  "version": "1.0.0",
+  "description": "Learn BabylonJS to Create Your Own 3D Metaverse Environments",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node server.js",
+    "docs": "docsify serve docs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "BabylonJS",
+    "Dolby.io"
+  ],
+  "author": "Dan Zeitman",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.0",
+    "docsify": "^4.12.2",
+    "docsify-copy-code": "^2.1.1",
+    "docsify-example-panels": "^1.1.0",
+    "docsify-tabs": "^1.5.3",
+    "express": "^4.18.1",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "docsify-cli": "^4.4.4",
+    "serve": "^14.0.1"
+  }
+}
