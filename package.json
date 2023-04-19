@@ -1,5 +1,5 @@
 {
-  "name": "cascadiajs-2022-workshop",
+  "name": "Learn BabylonJS and Dolby.io",
   "version": "1.0.0",
   "description": "Learn BabylonJS to Create Your Own 3D Metaverse Environments",
   "main": "index.js",
@@ -16,17 +16,12 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.0",
-    "docsify": "^4.12.2",
+    "docsify": "^4.13.0",
     "docsify-copy-code": "^2.1.1",
     "docsify-example-panels": "^1.1.0",
     "docsify-tabs": "^1.5.3",
     "express": "^4.18.1",
-    "path": "^0.12.7",
-    "minimatch": "^3.0.5"
-  },
-  "devDependencies": {
-    "docsify-cli": "^4.4.4",
-    "serve": "^14.0.1",
-    "minimatch": "^3.0.5"
+    "marked": "^4.3.0",
+    "path": "^0.12.7"
   }
 }
