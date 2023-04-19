@@ -12,5 +12,8 @@ Additional hands-on sections explore extending this environment to include live 
 ## Run Dev Server
 ```npm run dev```
 
+## install Docsify tools globally:
+``` npm install docsify-cli -g```
+
 ## Run Documentation Server
 ```npm run docs```
