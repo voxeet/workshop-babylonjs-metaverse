@@ -84,13 +84,13 @@ var createScene = function () {
     videoPlaneMesh = BABYLON.MeshBuilder.CreatePlane("plane", videoPlaneOptions, scene);
     videoPlaneMesh.position = new BABYLON.Vector3(0, height + 2, -2);
 
-
-    let arthur = '../../assets/textures/arthur.mp4';
+//  load local video
+    // let localVideo = 'path-to-video';
 
     // Alternate load from a URL
-    // let bear = 'https://dynamicgamesdeveloper.github.io/Video/Bear.webm';
+    let bear = 'https://dynamicgamesdeveloper.github.io/Video/Bear.webm';
 
-    var videos = [arthur]; // this Array may contain alternate video format and resolutions
+    var videos = [bear]; // this Array may contain alternate video format and resolutions
 
     // Load Video
     commonMaterials.createVideoMaterialAndTexture(videos, false, false).then((videoTM) => {
@@ -196,7 +196,7 @@ var createScene = function () {
 
 
         videoButton.onPointerUpObservable.add(function () {
-            videoTexture.video.srcObject = arthur.srcObject
+            videoTexture.video.srcObject = introVideo.srcObject
             videoTexture.video.play();
         });
 
