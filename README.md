@@ -1,3 +1,5 @@
+# :warning: This repository is no longer maintained :warning:
+
 # Learn BabylonJS to Create Your Own 3D Metaverse Environments
 
 Users expect immersive experiences that can not only be entertaining but create engagement and retention.
